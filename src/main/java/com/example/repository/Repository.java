@@ -11,5 +11,4 @@ public interface Repository<T>  {
     T getByID(Integer id) throws SQLException;
     void save(T t);
     void delete(Integer id);
-
 }
