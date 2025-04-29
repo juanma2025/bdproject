@@ -59,13 +59,51 @@ public class ActorRepository implements Repository<Actor> {
     }
 
     @Override
-    public void save(Actor t) {
-        return;
+    public void save(Actor actor) throws SQLException {
+        String checkSql = "SELECT COUNT(*) FROM sakila.actor WHERE actor_id = ?";
+        String insertSql = "INSERT INTO sakila.actor (actor_id, first_name, last_name) VALUES (?, ?, ?)";
+        String updateSql = "UPDATE sakila.actor SET first_name = ?, last_name = ? WHERE actor_id = ?";
+
+        try (Connection connection = getConnection();
+                PreparedStatement checkStatement = connection.prepareStatement(checkSql)) {
+
+            checkStatement.setInt(1, actor.getActorID());
+            ResultSet resultSet = checkStatement.executeQuery();
+            resultSet.next();
+            int count = resultSet.getInt(1);
+
+            if (count > 0) {
+                // Update existing record
+                try (PreparedStatement updateStatement = connection.prepareStatement(updateSql)) {
+                    updateStatement.setString(1, actor.getFirstName());
+                    updateStatement.setString(2, actor.getLastName());
+                    updateStatement.setInt(3, actor.getActorID());
+                    updateStatement.executeUpdate();
+                }
+            } else {
+                // Insert new record
+                try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
+                    insertStatement.setInt(1, actor.getActorID());
+                    insertStatement.setString(2, actor.getFirstName());
+                    insertStatement.setString(3, actor.getLastName());
+                    insertStatement.executeUpdate();
+                }
+            }
+        }
     }
 
     @Override
     public void delete(Integer id) {
-        return;
+        String sql = "DELETE FROM sakila.actor WHERE actor_id = ?";
+
+        try (Connection connection = getConnection();
+                PreparedStatement deleteStatement = connection.prepareStatement(sql)) {
+
+            deleteStatement.setInt(1, id);
+            deleteStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error deleting actor with ID: " + id, e);
+        }
     }
 
 }
